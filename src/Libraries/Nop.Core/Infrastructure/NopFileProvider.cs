@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Logging;
 
 namespace Nop.Core.Infrastructure
 {
@@ -26,13 +27,14 @@ namespace Nop.Core.Infrastructure
             if (File.Exists(path))
                 path = Path.GetDirectoryName(path);
 
-            BaseDirectory = path;
+            BaseDirectory = path.ToOsPath();
         }
 
         #region Utilities
 
         private static void DeleteDirectoryRecursive(string path)
         {
+            path.ToOsPath();
             Directory.Delete(path, true);
             const int maxIterationToWait = 10;
             var curIteration = 0;
@@ -59,7 +61,9 @@ namespace Nop.Core.Infrastructure
         /// <returns>The combined paths</returns>
         public virtual string Combine(params string[] paths)
         {
-            return Path.Combine(paths);
+            var path = Path.Combine(paths);
+
+            return path.ToOsPath();
         }
 
         /// <summary>
@@ -68,6 +72,7 @@ namespace Nop.Core.Infrastructure
         /// <param name="path">The directory to create</param>
         public virtual void CreateDirectory(string path)
         {
+            path.ToOsPath();
             if (!DirectoryExists(path))
                 Directory.CreateDirectory(path);
         }
@@ -78,6 +83,7 @@ namespace Nop.Core.Infrastructure
         /// <param name="path">The path and name of the file to create</param>
         public virtual void CreateFile(string path)
         {
+            path.ToOsPath();
             if (FileExists(path))
                 return;
 
@@ -93,6 +99,7 @@ namespace Nop.Core.Infrastructure
         /// <param name="path">Directory path</param>
         public void DeleteDirectory(string path)
         {
+            path.ToOsPath();
             if (string.IsNullOrEmpty(path))
                 throw new ArgumentNullException(path);
 
@@ -124,6 +131,7 @@ namespace Nop.Core.Infrastructure
         /// <param name="filePath">The name of the file to be deleted. Wildcard characters are not supported</param>
         public virtual void DeleteFile(string filePath)
         {
+            filePath.ToOsPath();
             if (!FileExists(filePath))
                 return;
 
@@ -140,6 +148,7 @@ namespace Nop.Core.Infrastructure
         /// </returns>
         public virtual bool DirectoryExists(string path)
         {
+            path.ToOsPath();
             return Directory.Exists(path);
         }
 
@@ -177,7 +186,8 @@ namespace Nop.Core.Infrastructure
         public virtual IEnumerable<string> EnumerateFiles(string directoryPath, string searchPattern,
             bool topDirectoryOnly = true)
         {
-            return Directory.EnumerateFiles(directoryPath, searchPattern,
+            directoryPath.ToOsPath();
+            return Directory.EnumerateFiles(directoryPath.ToOsPath(), searchPattern,
                 topDirectoryOnly ? SearchOption.TopDirectoryOnly : SearchOption.AllDirectories);
         }
 
@@ -202,6 +212,7 @@ namespace Nop.Core.Infrastructure
         /// </returns>
         public virtual bool FileExists(string filePath)
         {
+            filePath.ToOsPath();
             return File.Exists(filePath);
         }
 
@@ -212,6 +223,7 @@ namespace Nop.Core.Infrastructure
         /// <returns>The length of the file</returns>
         public virtual long FileLength(string path)
         {
+            path.ToOsPath();
             if (!FileExists(path))
                 return -1;
 
@@ -237,8 +249,9 @@ namespace Nop.Core.Infrastructure
         {
             var allPaths = paths.ToList();
             allPaths.Insert(0, Root);
+            string fullPath = Path.Combine(allPaths.ToArray());
 
-            return Path.Combine(allPaths.ToArray());
+            return fullPath.ToOsPath();
         }
 
         /// <summary>
@@ -248,7 +261,7 @@ namespace Nop.Core.Infrastructure
         /// <returns>An object that encapsulates the access control rules for the file described by the path parameter</returns>
         public virtual DirectorySecurity GetAccessControl(string path)
         {
-            return new DirectoryInfo(path).GetAccessControl();
+            return new DirectoryInfo(path.ToOsPath()).GetAccessControl();
         }
 
         /// <summary>
@@ -261,7 +274,7 @@ namespace Nop.Core.Infrastructure
         /// </returns>
         public virtual DateTime GetCreationTime(string path)
         {
-            return File.GetCreationTime(path);
+            return File.GetCreationTime(path.ToOsPath());
         }
 
         /// <summary>
@@ -287,7 +300,7 @@ namespace Nop.Core.Infrastructure
             if (string.IsNullOrEmpty(searchPattern))
                 searchPattern = "*";
 
-            return Directory.GetDirectories(path, searchPattern,
+            return Directory.GetDirectories(path.ToOsPath(), searchPattern,
                 topDirectoryOnly ? SearchOption.TopDirectoryOnly : SearchOption.AllDirectories);
         }
 
@@ -301,7 +314,7 @@ namespace Nop.Core.Infrastructure
         /// </returns>
         public virtual string GetDirectoryName(string path)
         {
-            return Path.GetDirectoryName(path);
+            return Path.GetDirectoryName(path.ToOsPath());
         }
 
         /// <summary>
@@ -311,7 +324,7 @@ namespace Nop.Core.Infrastructure
         /// <returns>The directory name</returns>
         public virtual string GetDirectoryNameOnly(string path)
         {
-            return new DirectoryInfo(path).Name;
+            return new DirectoryInfo(path.ToOsPath()).Name;
         }
 
         /// <summary>
@@ -321,7 +334,7 @@ namespace Nop.Core.Infrastructure
         /// <returns>The extension of the specified path (including the period ".")</returns>
         public virtual string GetFileExtension(string filePath)
         {
-            return Path.GetExtension(filePath);
+            return Path.GetExtension(filePath.ToOsPath());
         }
 
         /// <summary>
@@ -331,7 +344,7 @@ namespace Nop.Core.Infrastructure
         /// <returns>The characters after the last directory character in path</returns>
         public virtual string GetFileName(string path)
         {
-            return Path.GetFileName(path);
+            return Path.GetFileName(path.ToOsPath());
         }
 
         /// <summary>
@@ -341,7 +354,7 @@ namespace Nop.Core.Infrastructure
         /// <returns>The file name, minus the last period (.) and all characters following it</returns>
         public virtual string GetFileNameWithoutExtension(string filePath)
         {
-            return Path.GetFileNameWithoutExtension(filePath);
+            return Path.GetFileNameWithoutExtension(filePath.ToOsPath());
         }
 
         /// <summary>
@@ -367,7 +380,7 @@ namespace Nop.Core.Infrastructure
             if (string.IsNullOrEmpty(searchPattern))
                 searchPattern = "*.*";
 
-            return Directory.GetFiles(directoryPath, searchPattern,
+            return Directory.GetFiles(directoryPath.ToOsPath(), searchPattern,
                 topDirectoryOnly ? SearchOption.TopDirectoryOnly : SearchOption.AllDirectories);
         }
 
@@ -378,7 +391,7 @@ namespace Nop.Core.Infrastructure
         /// <returns>A System.DateTime structure set to the date and time that the specified file</returns>
         public virtual DateTime GetLastAccessTime(string path)
         {
-            return File.GetLastAccessTime(path);
+            return File.GetLastAccessTime(path.ToOsPath());
         }
 
         /// <summary>
@@ -391,7 +404,7 @@ namespace Nop.Core.Infrastructure
         /// </returns>
         public virtual DateTime GetLastWriteTime(string path)
         {
-            return File.GetLastWriteTime(path);
+            return File.GetLastWriteTime(path.ToOsPath());
         }
 
         /// <summary>
@@ -405,7 +418,7 @@ namespace Nop.Core.Infrastructure
         /// </returns>
         public virtual DateTime GetLastWriteTimeUtc(string path)
         {
-            return File.GetLastWriteTimeUtc(path);
+            return File.GetLastWriteTimeUtc(path.ToOsPath());
         }
 
         /// <summary>
@@ -415,7 +428,7 @@ namespace Nop.Core.Infrastructure
         /// <returns>The parent directory, or null if path is the root directory, including the root of a UNC server or share name</returns>
         public virtual string GetParentDirectory(string directoryPath)
         {
-            return Directory.GetParent(directoryPath).FullName;
+            return Directory.GetParent(directoryPath.ToOsPath()).FullName;
         }
 
         /// <summary>
@@ -425,7 +438,7 @@ namespace Nop.Core.Infrastructure
         /// <returns>True, if the path is a directory, otherwise false</returns>
         public virtual bool IsDirectory(string path)
         {
-            return DirectoryExists(path);
+            return DirectoryExists(path.ToOsPath());
         }
 
         /// <summary>
@@ -435,8 +448,10 @@ namespace Nop.Core.Infrastructure
         /// <returns>The physical path. E.g. "c:\inetpub\wwwroot\bin"</returns>
         public virtual string MapPath(string path)
         {
-            path = path.Replace("~/", string.Empty).TrimStart('/').Replace('/', '\\');
-            return Path.Combine(BaseDirectory ?? string.Empty, path);
+            path = path.Replace("~/", string.Empty).TrimStart('/');
+            path.ToOsPath();
+
+            return Path.Combine(BaseDirectory ?? string.Empty, path.ToOsPath());
         }
         
         /// <summary>
@@ -446,6 +461,7 @@ namespace Nop.Core.Infrastructure
         /// <returns>A byte array containing the contents of the file</returns>
         public virtual byte[] ReadAllBytes(string filePath)
         {
+            filePath.ToOsPath();
             return File.Exists(filePath) ? File.ReadAllBytes(filePath) : new byte[0];
         }
 
@@ -457,7 +473,7 @@ namespace Nop.Core.Infrastructure
         /// <returns>A string containing all lines of the file</returns>
         public virtual string ReadAllText(string path, Encoding encoding)
         {
-            return File.ReadAllText(path, encoding);
+            return File.ReadAllText(path.ToOsPath(), encoding);
         }
 
         /// <summary>
@@ -470,7 +486,7 @@ namespace Nop.Core.Infrastructure
         /// </param>
         public virtual void SetLastWriteTimeUtc(string path, DateTime lastWriteTimeUtc)
         {
-            File.SetLastWriteTimeUtc(path, lastWriteTimeUtc);
+            File.SetLastWriteTimeUtc(path.ToOsPath(), lastWriteTimeUtc);
         }
 
         /// <summary>
@@ -480,7 +496,7 @@ namespace Nop.Core.Infrastructure
         /// <param name="bytes">The bytes to write to the file</param>
         public virtual void WriteAllBytes(string filePath, byte[] bytes)
         {
-            File.WriteAllBytes(filePath, bytes);
+            File.WriteAllBytes(filePath.ToOsPath(), bytes);
         }
 
         /// <summary>
@@ -492,7 +508,7 @@ namespace Nop.Core.Infrastructure
         /// <param name="encoding">The encoding to apply to the string</param>
         public virtual void WriteAllText(string path, string contents, Encoding encoding)
         {
-            File.WriteAllText(path, contents, encoding);
+            File.WriteAllText(path.ToOsPath(), contents, encoding);
         }
 
         protected string BaseDirectory { get; }

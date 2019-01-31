@@ -1,8 +1,9 @@
-﻿using System;
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Nop.Web.Framework.Infrastructure.Extensions;
+using System;
 
 namespace Nop.Web
 {
@@ -18,17 +19,22 @@ namespace Nop.Web
         /// </summary>
         public IConfiguration Configuration { get; }
 
-        #endregion
+        #endregion Properties
 
         #region Ctor
 
-        public Startup(IConfiguration configuration)
+        public Startup(IHostingEnvironment env)
         {
-            //set configuration
-            Configuration = configuration;
+            var builder = new ConfigurationBuilder()
+                .SetBasePath(env.ContentRootPath)
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddJsonFile("appsettings.{env.EnvironmentName}.json", optional: true)
+                .AddEnvironmentVariables();
+
+            this.Configuration = builder.Build();
         }
 
-        #endregion
+        #endregion Ctor
 
         /// <summary>
         /// Add services to the application and configure service provider

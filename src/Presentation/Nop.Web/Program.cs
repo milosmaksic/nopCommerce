@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
+using System.IO;
 
 namespace Nop.Web
 {
@@ -7,12 +9,17 @@ namespace Nop.Web
     {
         public static void Main(string[] args)
         {
-            var host = WebHost.CreateDefaultBuilder(args)
-                .UseKestrel(options => options.AddServerHeader = false)
-                .UseStartup<Startup>()
-                .Build();
+            var config = new ConfigurationBuilder()
+                        .SetBasePath(Directory.GetCurrentDirectory())
+                        .AddJsonFile("hosting.json", optional: false)
+                        .Build();
 
-            host.Run();
+            WebHost.CreateDefaultBuilder(args)
+                .UseConfiguration(config)
+                .UseKestrel()
+                .UseStartup<Startup>()
+                .Build()
+                .Run();
         }
     }
 }
